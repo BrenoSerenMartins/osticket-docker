@@ -1,4 +1,13 @@
+# Environment variables
 .env
+
+# Ignore project files within the www directory.
+# The create-osticket-project.sh script will populate this.
 www/*
-nginx/conf.d/*
-!nginx/conf.d/osticket.conf.example
+
+# Keep the www directory itself in the repo, but ignore its contents.
+!www/.gitkeep
+
+# Docker-compose logs or other temporary files
+*.log
+tmp/

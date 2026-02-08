@@ -1,0 +1,61 @@
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name {{PROJECT_NAME}};
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS Server Block
+server {
+    listen 443 ssl;
+    server_name {{PROJECT_NAME}};
+
+    # SSL Certificates
+    ssl_certificate /etc/nginx/certs/{{PROJECT_NAME}}.crt;
+    ssl_certificate_key /etc/nginx/certs/{{PROJECT_NAME}}.key;
+
+    # Root Directory and Index
+    root /var/www/{{PROJECT_NAME}};
+    index index.php;
+
+    # Logging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    # Main Location Block
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Block access to sensitive directories
+    location ~ ^/include {
+        deny all;
+    }
+    location ~ ^/setup {
+        # This should be accessible during installation,
+        # but can be denied after setup is complete.
+        try_files $uri $uri/ /setup/index.php?$query_string;
+    }
+
+    # PHP-FPM Processing
+    location ~ \.php$ {
+        if (!-f $request_filename) {
+            return 404;
+        }
+
+        fastcgi_pass   php-fpm:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param  HTTPS "on"; # Set HTTPS param for PHP
+        include        fastcgi_params;
+
+        fastcgi_connect_timeout 60s;
+        fastcgi_send_timeout 60s;
+        fastcgi_read_timeout 60s;
+    }
+
+    # Deny access to .htaccess files
+    location ~ /\.ht {
+        deny all;
+    }
+}
