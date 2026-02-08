@@ -1,0 +1,48 @@
+server {
+    listen 80;
+    server_name {{PROJECT_NAME}};
+
+    root /var/www/{{PROJECT_NAME}};
+    index index.php;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Block access to the include directory
+    location ~ ^/include {
+        deny all;
+    }
+    
+    # Block access to the setup directory after installation is complete
+    # You may want to comment this out during installation
+    # location ~ ^/setup {
+    #     deny all;
+    # }
+
+    location ~ \.php$ {
+        if (!-f $request_filename) {
+            return 404;
+        }
+
+        fastcgi_pass   php-fpm:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+
+        fastcgi_connect_timeout 60s;
+        fastcgi_send_timeout 60s;
+        fastcgi_read_timeout 60s;
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 4 256k;
+        fastcgi_busy_buffers_size 256k;
+    }
+
+    # Deny access to .htaccess files
+    location ~ /\.ht {
+        deny all;
+    }
+}

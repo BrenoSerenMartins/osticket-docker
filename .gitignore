@@ -1,0 +1,4 @@
+.env
+www/*
+nginx/conf.d/*
+!nginx/conf.d/osticket.conf.example
